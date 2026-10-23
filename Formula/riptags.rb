@@ -5,23 +5,23 @@ class Riptags < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/keithamus/riptags/releases/download/v0.2.0/rt-darwin-arm64.tar.gz"
-      sha256 "cdb9c1e2d76e7886bd2d3a472d9c00ea49ae6a380d4969a98c6ce5b00456b15b"
+      url "https://github.com/keithamus/riptags/releases/download/v0.2.3/rt-darwin-arm64.tar.gz"
+      sha256 "6eb9996bf068e240fbc0f0c603480fd0a83da51b2c49cdd8fbc095e1d0cb6755"
     end
     on_intel do
-      url "https://github.com/keithamus/riptags/releases/download/v0.2.0/rt-darwin-x64.tar.gz"
-      sha256 "f0e93c2efe953edddaa85717c1f1df672c68b227c3665984b093549da706146f"
+      url "https://github.com/keithamus/riptags/releases/download/v0.2.3/rt-darwin-x64.tar.gz"
+      sha256 "0874d6da776a538d989029275ee0fe647aa7e63bee6d653bee8626ec39f532f9"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/keithamus/riptags/releases/download/v0.2.0/rt-linux-arm64.tar.gz"
-      sha256 "9061106055b8d157fa8b8edc2906c4a4f818733d8b03a83c67ac2ec2137ae101"
+      url "https://github.com/keithamus/riptags/releases/download/v0.2.3/rt-linux-arm64.tar.gz"
+      sha256 "d70e3404111fe33ee39de28c3860e44e1b591ee7bd04f8b9c7ee6d4f3aa94b2f"
     end
     on_intel do
-      url "https://github.com/keithamus/riptags/releases/download/v0.2.0/rt-linux-x64.tar.gz"
-      sha256 "9354e27d25ecd6ebddbadc5e031e8c10e6b0b9fbbd30a6138eda22cab9f82032"
+      url "https://github.com/keithamus/riptags/releases/download/v0.2.3/rt-linux-x64.tar.gz"
+      sha256 "3066c854d2a6922a4a6261d39b9b20b1256df740e5dc7b8a67e215aab1cf557a"
     end
   end
 
