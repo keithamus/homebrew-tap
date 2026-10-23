@@ -16,3 +16,10 @@ desc = "Refreshing CSS: formatter, minifier, linter and more"
 homepage = "https://csskit.rs/"
 bin = "csskit"
 asset = "csskit-{os}-{arch}"
+
+[[package]]
+name = "git-worktree-share"
+repo = "keithamus/git-worktree-share"
+desc = "Share untracked files across git worktrees"
+bin = "git-worktree-share"
+depends = ["bash", "git"]
