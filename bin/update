@@ -56,10 +56,43 @@ EOF
   echo "$name $version"
 }
 
-generate riptags Riptags keithamus/riptags \
-  "Fast tree-sitter symbol search: definitions and cross-references" \
-  "https://github.com/keithamus/riptags" rt "rt-{os}-{arch}.tar.gz"
+# formula class repo desc homepage binary
+# Installs bin/<binary> from the latest release's source tarball.
+generate_script() {
+  local name=$1 class=$2 repo=$3 desc=$4 homepage=$5 bin=$6
+  local tag url
+  tag=$(gh release view -R "$repo" --json tagName -q .tagName)
+  url="https://github.com/$repo/archive/refs/tags/$tag.tar.gz"
 
-generate csskit Csskit csskit/csskit \
-  "Refreshing CSS: formatter, minifier, linter and more" \
-  "https://csskit.rs/" csskit "csskit-{os}-{arch}"
+  cat >"Formula/$name.rb" <<EOF
+class $class < Formula
+  desc "$desc"
+  homepage "$homepage"
+  url "$url"
+  sha256 "$(sha "$url")"
+  license "MIT"
+
+  def install
+    bin.install "bin/$bin"
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/$bin --version")
+  end
+end
+EOF
+  echo "$name ${tag#v}"
+}
+
+yq -p toml -o json packages.toml | jq -r '.package[] | [
+    .name,
+    (.name | split("-") | map((.[:1] | ascii_upcase) + .[1:]) | join("")),
+    .repo, .desc, (.homepage // "https://github.com/\(.repo)"), .bin, (.asset // "")
+  ] | join("\u001f")' |
+  while IFS=$'\x1f' read -r name class repo desc homepage bin asset; do
+    if [[ -n $asset ]]; then
+      generate "$name" "$class" "$repo" "$desc" "$homepage" "$bin" "$asset"
+    else
+      generate_script "$name" "$class" "$repo" "$desc" "$homepage" "$bin"
+    fi
+  done

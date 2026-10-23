@@ -1,0 +1,18 @@
+# Packages published to Homebrew (bin/update) and the AUR (aur/update).
+# With `asset` ({os}-{arch} template): release binaries, AUR package <name>-bin.
+# Without: bin/<bin> from the release's source tarball, AUR package <name>.
+
+[[package]]
+name = "riptags"
+repo = "keithamus/riptags"
+desc = "Fast tree-sitter symbol search: definitions and cross-references"
+bin = "rt"
+asset = "rt-{os}-{arch}.tar.gz"
+
+[[package]]
+name = "csskit"
+repo = "csskit/csskit"
+desc = "Refreshing CSS: formatter, minifier, linter and more"
+homepage = "https://csskit.rs/"
+bin = "csskit"
+asset = "csskit-{os}-{arch}"

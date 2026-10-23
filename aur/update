@@ -89,10 +89,71 @@ EOF
   echo "$pkgname $pkgver"
 }
 
-generate riptags-bin keithamus/riptags \
-  "Fast tree-sitter symbol search: definitions and cross-references" \
-  "https://github.com/keithamus/riptags" rt "rt-linux-{arch}.tar.gz" rt
+# pkgname repo desc url bin depends
+# Installs bin/<bin> from the latest release's source tarball; arch-independent.
+generate_script() {
+  local pkgname=$1 repo=$2 desc=$3 url=$4 bin=$5 depends=$6
+  local tag pkgver gh src sum dep pkg_depends="" srcinfo_depends=""
+  tag=$(latest_tag "$repo")
+  pkgver=${tag#v}
+  gh="https://github.com/$repo"
+  src="$pkgname-$pkgver.tar.gz::$gh/archive/refs/tags/$tag.tar.gz"
+  sum=$(sha "$gh/archive/refs/tags/$tag.tar.gz")
+  for dep in $depends; do
+    pkg_depends+="'$dep' "
+    srcinfo_depends+=$'\tdepends = '"$dep"$'\n'
+  done
 
-generate csskit-bin csskit/csskit \
-  "Refreshing CSS: formatter, minifier, linter and more" \
-  "https://csskit.rs/" csskit "csskit-linux-{arch}" '$srcdir/csskit-$pkgver-$CARCH'
+  mkdir -p "$out/$pkgname"
+  cat >"$out/$pkgname/PKGBUILD" <<EOF
+# Maintainer: Keith Cirkel <keithamus@users.noreply.github.com>
+pkgname=$pkgname
+pkgver=$pkgver
+pkgrel=1
+pkgdesc="$desc"
+arch=('any')
+url="$url"
+license=('MIT')
+depends=(${pkg_depends% })
+source=("${src//$pkgver/\$pkgver}")
+sha256sums=('$sum')
+
+package() {
+  cd "${repo#*/}-\$pkgver"
+  install -Dm755 "bin/$bin" "\$pkgdir/usr/bin/$bin"
+  install -Dm644 LICENSE "\$pkgdir/usr/share/licenses/\$pkgname/LICENSE"
+}
+EOF
+
+  cat >"$out/$pkgname/.SRCINFO" <<EOF
+pkgbase = $pkgname
+	pkgdesc = $desc
+	pkgver = $pkgver
+	pkgrel = 1
+	url = $url
+	arch = any
+	license = MIT
+${srcinfo_depends}	source = $src
+	sha256sums = $sum
+
+pkgname = $pkgname
+EOF
+  echo "$pkgname $pkgver"
+}
+
+yq -p toml -o json "$(dirname "$0")/../packages.toml" | jq -r '.package[] | [
+    .name, .repo, .desc, (.homepage // "https://github.com/\(.repo)"), .bin,
+    (.asset // ""), ((.depends // []) | join(" "))
+  ] | join("\u001f")' |
+  while IFS=$'\x1f' read -r name repo desc url bin asset depends; do
+    if [[ -n $asset ]]; then
+      if [[ $asset == *.tar.gz ]]; then
+        from=$bin
+      else
+        from="\$srcdir/$bin-\$pkgver-\$CARCH"
+      fi
+      generate "$name-bin" "$repo" "$desc" "$url" "$bin" "${asset//\{os\}/linux}" "$from"
+    else
+      generate_script "$name" "$repo" "$desc" "$url" "$bin" "$depends"
+    fi
+  done
