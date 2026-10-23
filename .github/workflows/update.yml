@@ -18,7 +18,7 @@ jobs:
       - name: Regenerate formulae
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bin/update
+        run: brew/update
 
       - name: Commit
         run: |

@@ -1,4 +1,4 @@
-# Packages published to Homebrew (bin/update) and the AUR (aur/update).
+# Packages published to Homebrew (brew/update) and the AUR (aur/update).
 # With `asset` ({os}-{arch} template): release binaries, AUR package <name>-bin.
 # Without: bin/<bin> from the release's source tarball, AUR package <name>.
 
