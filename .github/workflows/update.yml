@@ -28,3 +28,41 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Update formulae"
           git push
+
+  aur:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure SSH
+        env:
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$AUR_SSH_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
+          printf 'Host aur.archlinux.org\n  IdentityFile ~/.ssh/aur\n' > ~/.ssh/config
+
+      - name: Regenerate packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: aur/update "$RUNNER_TEMP/gen"
+
+      - name: Push to AUR
+        run: |
+          for gen in "$RUNNER_TEMP"/gen/*/; do
+            pkg=$(basename "$gen")
+            repo="$RUNNER_TEMP/aur/$pkg"
+            git clone "ssh://aur@aur.archlinux.org/$pkg.git" "$repo"
+            cp "$gen/PKGBUILD" "$gen/.SRCINFO" "$repo/"
+            cd "$repo"
+            git add PKGBUILD .SRCINFO
+            if ! git diff --cached --quiet; then
+              git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+                commit -m "Update to $(grep -m1 '^pkgver=' PKGBUILD | cut -d= -f2)"
+              git push origin HEAD:master
+            fi
+            cd - >/dev/null
+          done

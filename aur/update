@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# Usage: aur/update <dir>
+# Writes <dir>/<pkgname>/{PKGBUILD,.SRCINFO} for each package's latest release.
+set -euo pipefail
+
+out=$1
+
+latest_tag() {
+  curl -fsSL ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} \
+    "https://api.github.com/repos/$1/releases/latest" | jq -r .tag_name
+}
+
+sha() {
+  curl -fsSL "$1" | sha256sum | cut -d' ' -f1
+}
+
+# pkgname repo desc url bin asset-template install-from
+# asset-template uses {arch} (x64|arm64); install-from is the file to install as /usr/bin/<bin>
+generate() {
+  local pkgname=$1 repo=$2 desc=$3 url=$4 bin=$5 asset=$6 from=$7
+  local tag pkgver gh license
+  tag=$(latest_tag "$repo")
+  pkgver=${tag#v}
+  gh="https://github.com/$repo"
+  license="https://raw.githubusercontent.com/$repo/$tag/LICENSE"
+
+  if ! curl -fsIL "$license" >/dev/null; then
+    echo "$pkgname $pkgver: no LICENSE at $tag, skipping" >&2
+    return
+  fi
+
+  local -A arches=([x86_64]=x64 [aarch64]=arm64)
+  local -A srcs shas
+  local arch file
+  for arch in x86_64 aarch64; do
+    file=${asset//\{arch\}/${arches[$arch]}}
+    srcs[$arch]="${bin}-${pkgver}-${arch}${file#*-linux-${arches[$arch]}}::$gh/releases/download/$tag/$file"
+    shas[$arch]=$(sha "$gh/releases/download/$tag/$file")
+  done
+  local license_src="$pkgname-$pkgver-LICENSE::$license"
+  local license_sha
+  license_sha=$(sha "$license")
+
+  mkdir -p "$out/$pkgname"
+  cat >"$out/$pkgname/PKGBUILD" <<EOF
+# Maintainer: Keith Cirkel <keithamus@users.noreply.github.com>
+pkgname=$pkgname
+pkgver=$pkgver
+pkgrel=1
+pkgdesc="$desc"
+arch=('x86_64' 'aarch64')
+url="$url"
+license=('MIT')
+provides=('${pkgname%-bin}')
+conflicts=('${pkgname%-bin}')
+source=("${license_src//$pkgver/\$pkgver}")
+source_x86_64=("${srcs[x86_64]//$pkgver/\$pkgver}")
+source_aarch64=("${srcs[aarch64]//$pkgver/\$pkgver}")
+sha256sums=('$license_sha')
+sha256sums_x86_64=('${shas[x86_64]}')
+sha256sums_aarch64=('${shas[aarch64]}')
+
+package() {
+  install -Dm755 "$from" "\$pkgdir/usr/bin/$bin"
+  install -Dm644 "\$pkgname-\$pkgver-LICENSE" "\$pkgdir/usr/share/licenses/\$pkgname/LICENSE"
+}
+EOF
+
+  cat >"$out/$pkgname/.SRCINFO" <<EOF
+pkgbase = $pkgname
+	pkgdesc = $desc
+	pkgver = $pkgver
+	pkgrel = 1
+	url = $url
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	provides = ${pkgname%-bin}
+	conflicts = ${pkgname%-bin}
+	source = $license_src
+	sha256sums = $license_sha
+	source_x86_64 = ${srcs[x86_64]}
+	sha256sums_x86_64 = ${shas[x86_64]}
+	source_aarch64 = ${srcs[aarch64]}
+	sha256sums_aarch64 = ${shas[aarch64]}
+
+pkgname = $pkgname
+EOF
+  echo "$pkgname $pkgver"
+}
+
+generate riptags-bin keithamus/riptags \
+  "Fast tree-sitter symbol search: definitions and cross-references" \
+  "https://github.com/keithamus/riptags" rt "rt-linux-{arch}.tar.gz" rt
+
+generate csskit-bin csskit/csskit \
+  "Refreshing CSS: formatter, minifier, linter and more" \
+  "https://csskit.rs/" csskit "csskit-linux-{arch}" '$srcdir/csskit-$pkgver-$CARCH'
