@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+mkdir -p Formula
+
+sha() {
+  curl -fsSL "$1" | shasum -a 256 | cut -d' ' -f1
+}
+
+# formula class repo desc homepage binary asset-template
+# asset-template uses {os}-{arch}, e.g. rt-{os}-{arch}.tar.gz
+generate() {
+  local name=$1 class=$2 repo=$3 desc=$4 homepage=$5 bin=$6 asset=$7
+  local tag version base
+  tag=$(gh release view -R "$repo" --json tagName -q .tagName)
+  version=${tag#v}
+  base="https://github.com/$repo/releases/download/$tag"
+
+  local blocks="" os arch file
+  for os in darwin linux; do
+    local section="  on_${os/darwin/macos} do"$'\n'
+    for arch in arm64 x64; do
+      file=${asset//\{os\}/$os}
+      file=${file//\{arch\}/$arch}
+      section+="    on_$([ "$arch" = arm64 ] && echo arm || echo intel) do"$'\n'
+      section+="      url \"$base/$file\""$'\n'
+      section+="      sha256 \"$(sha "$base/$file")\""$'\n'
+      section+="    end"$'\n'
+    done
+    blocks+="$section  end"$'\n\n'
+  done
+
+  local install
+  if [[ $asset == *.tar.gz ]]; then
+    install="bin.install \"$bin\""
+  else
+    install="bin.install Dir[\"$bin-*\"].first => \"$bin\""
+  fi
+
+  cat >"Formula/$name.rb" <<EOF
+class $class < Formula
+  desc "$desc"
+  homepage "$homepage"
+  license "MIT"
+
+${blocks}  def install
+    $install
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/$bin --version")
+  end
+end
+EOF
+  echo "$name $version"
+}
+
+generate riptags Riptags keithamus/riptags \
+  "Fast tree-sitter symbol search: definitions and cross-references" \
+  "https://github.com/keithamus/riptags" rt "rt-{os}-{arch}.tar.gz"
+
+generate csskit Csskit csskit/csskit \
+  "Refreshing CSS: formatter, minifier, linter and more" \
+  "https://csskit.rs/" csskit "csskit-{os}-{arch}"
