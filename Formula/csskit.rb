@@ -5,23 +5,23 @@ class Csskit < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/csskit/csskit/releases/download/v0.0.36/csskit-darwin-arm64"
-      sha256 "6dc5f9447e7c0dd1360db932899661f64cdb5b4c41feb3bf6f9799ded8b74716"
+      url "https://github.com/csskit/csskit/releases/download/v0.0.37/csskit-darwin-arm64"
+      sha256 "455524bd92be23587631d2c172f088a1569ea7f9a7b57e32a2775f5da83e53cd"
     end
     on_intel do
-      url "https://github.com/csskit/csskit/releases/download/v0.0.36/csskit-darwin-x64"
-      sha256 "42ebf8414f9272f17905012d4d97820ccb80afc01796838680e4ffc140b690d8"
+      url "https://github.com/csskit/csskit/releases/download/v0.0.37/csskit-darwin-x64"
+      sha256 "cd3bdf37a0b54e55458079d8482b2cfd3c962b984b387d9d9d68beead22881e1"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/csskit/csskit/releases/download/v0.0.36/csskit-linux-arm64"
-      sha256 "962e807054e58dfdb0b9197987a94e4818194bb440b4c2035f4f89240b18c052"
+      url "https://github.com/csskit/csskit/releases/download/v0.0.37/csskit-linux-arm64"
+      sha256 "0f932dea3b4d31a3b5d17a984ac7ac763221e7f87a22edaf920d1cd497a8abe5"
     end
     on_intel do
-      url "https://github.com/csskit/csskit/releases/download/v0.0.36/csskit-linux-x64"
-      sha256 "677887b28364ba4ff3954bb490ffaffcdf41600ad4e293eefc80fb8fd21e6fbf"
+      url "https://github.com/csskit/csskit/releases/download/v0.0.37/csskit-linux-x64"
+      sha256 "7940d3313fc1fee01f9be46fca910c4876cc61f3a430b3806933329f6df264c9"
     end
   end
 
